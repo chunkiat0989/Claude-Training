@@ -1,0 +1,11 @@
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.p12
+.DS_Store
+Thumbs.db
+desktop.ini
+~$*
+.claude/settings.local.json
