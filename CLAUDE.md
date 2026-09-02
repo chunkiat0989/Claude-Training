@@ -160,11 +160,20 @@ collapses to one column at 900px and the KPI grid steps 4 → 2 → 1 at 1120px 
 A mirror of this page is published at
 https://claude.ai/code/artifact/12b58142-7a1c-4163-8846-31169bc427d5
 
-It is the **same markup and script** with one deliberate difference: it adds a dark-theme token set
-(`@media (prefers-color-scheme: dark)` guarded by `:root:not([data-theme="light"])`, plus
-`:root[data-theme="dark"]`) because artifacts render in the viewer's theme, and it omits the
-`<!doctype>/<html>/<head>/<body>` skeleton the artifact runtime injects. `index.html` stays
-light-only. If you change behaviour in `index.html`, port it to the artifact copy and republish by
+It carries the **same markup and the byte-identical script**, with three deliberate differences,
+because an artifact is rendered by the runtime rather than opened as a file:
+
+1. It omits the `<!doctype>/<html>/<head>/<body>` skeleton the artifact runtime injects.
+2. Every component colour is a semantic token (`--surface`, `--band`, `--thead-bg`, `--bar`, …),
+   with the complete light palette on bare `:root` and a dark set redefined twice — under
+   `@media (prefers-color-scheme: dark)` guarded by `:root:not([data-theme="light"])`, and again
+   under `:root[data-theme="dark"]` — because artifacts render in the viewer's theme. The dark
+   palette follows the branding skill's guidance: a `#003C72`-to-near-black ground with `#358CCB`
+   promoted to the accent role. `index.html` stays light-only and keeps its literal hexes.
+3. It loads Montserrat from Google Fonts (the one font host the artifact CSP admits), so the brand
+   face actually renders. `index.html` cannot — a web font would break its no-network constraint.
+
+If you change behaviour in `index.html`, port it to the artifact copy and republish by
 passing that URL as `url` — publishing without it creates a second artifact instead of updating this
 one.
 
