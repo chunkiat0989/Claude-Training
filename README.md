@@ -5,6 +5,12 @@ filter, sort, and maintain inventory records, with stock status derived automati
 quantity against reorder level. The entire application is a single `index.html`: markup, CSS and
 JavaScript inline, no frameworks and no build step. Open the file and it runs.
 
+## Live demo
+
+**https://chunkiat0989.github.io/Claude-Training/**
+
+Deployed from `main` by GitHub Actions on every push.
+
 ## Running it locally
 
 Clone the repo and open `index.html` in any modern browser. That is the whole setup — there is
