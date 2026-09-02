@@ -3,33 +3,47 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LogiTrack Inventory</title>
+<title>Kacific Inventory Dashboard</title>
 <style>
   /* ============================================================
-     DESIGN TOKENS
+     DESIGN TOKENS - Kacific Broadband Satellites brand palette.
+     The hex values are the ones the kacific.com theme hardcodes;
+     the token names are ours. Semantic status colours are kept
+     deliberately apart from the brand blue, so "low stock" can
+     never read as "accent".
      ============================================================ */
   :root {
-    --page:        #f5f7fa;
-    --card:        #ffffff;
-    --ink:         #16202c;
-    --ink-soft:    #5b6779;
-    --ink-faint:   #8794a5;
-    --line:        #e3e8ef;
-    --line-strong: #cfd7e3;
+    /* Brand blues */
+    --k-blue:        #034EA2;
+    --k-blue-deep:   #003C72;
+    --k-blue-mid:    #0071BC;
+    --k-blue-footer: #07529E;
+    --k-sky:         #358CCB;
+    --k-cyan:        #5DC1D4;
 
-    --accent:      #1d4ed8;
-    --accent-dark: #1e3a8a;
-    --accent-soft: #eef3ff;
+    /* Neutrals */
+    --k-white:     #FFFFFF;
+    --k-ink:       #464A4C;   /* body copy - 9.0:1 on white */
+    --k-ink-soft:  #616161;   /* secondary copy */
+    --k-blue-pale: #C5D3E9;   /* muted text ON blue - 5.3:1 */
+    --k-tint:      #F1F4FA;   /* pale panel band */
+    --k-hairline:  #DCE4EC;
 
-    --ok-bg:   #e7f6ed;  --ok-fg:   #10693a;  --ok-bd:   #b7e2c8;
-    --warn-bg: #fdf3dd;  --warn-fg: #8a5a06;  --warn-bd: #f2ddab;
-    --bad-bg:  #fdeaea;  --bad-fg:  #a12222;  --bad-bd:  #f4c4c4;
+    /* Semantic status - reserved. Never reused as a chart series. */
+    --ok-fill:   #1E8E4F;  --ok-bg:   #E8F5ED;  --ok-fg:   #0F6B39;  --ok-bd:   #BEE2CD;
+    --warn-fill: #E0A008;  --warn-bg: #FDF3DE;  --warn-fg: #855405;  --warn-bd: #F1DCAC;
+    --bad-fill:  #C1362F;  --bad-bg:  #FBEAE9;  --bad-fg:  #9B2A24;  --bad-bd:  #EFC6C3;
 
-    --radius:  12px;
-    --shadow:  0 1px 2px rgba(16, 32, 52, .06), 0 4px 14px rgba(16, 32, 52, .06);
-    --font:    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-               Arial, "Noto Sans", sans-serif;
-    --mono:    ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", monospace;
+    --radius:      10px;
+    --radius-pill: 38px;
+    --shadow:      0 1px 2px rgba(3, 78, 162, .06), 0 6px 20px rgba(3, 78, 162, .07);
+
+    /* Montserrat is the brand face. It is NOT fetched from the network -
+       this file still makes zero external requests - so it renders where
+       the viewer already has it and falls back cleanly everywhere else. */
+    --font: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+            "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", monospace;
   }
 
   /* ============================================================
@@ -39,11 +53,13 @@
 
   body {
     margin: 0;
-    background: var(--page);
-    color: var(--ink);
-    font: 14px/1.5 var(--font);
+    background: var(--k-white);
+    color: var(--k-ink);
+    font: 400 14px/1.55 var(--font);
     -webkit-font-smoothing: antialiased;
   }
+
+  h1, h2, h3 { color: var(--k-blue); line-height: 1.18; margin: 0; }
 
   /* One consistent, always-visible focus treatment. */
   a:focus-visible,
@@ -51,105 +67,281 @@
   input:focus-visible,
   select:focus-visible,
   th[data-key]:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--k-blue);
     outline-offset: 2px;
     border-radius: 4px;
   }
+  .appbar button:focus-visible { outline-color: var(--k-white); }
+
+  .shell { max-width: 1440px; margin: 0 auto; padding: 0 24px; }
 
   /* ============================================================
-     HEADER BAR + SUMMARY STRIP
+     APP BAR - solid brand blue, white logo, orbital hairlines
      ============================================================ */
   .appbar {
-    background: linear-gradient(135deg, var(--accent-dark), #2447a8);
-    color: #fff;
-    padding: 22px 24px 24px;
+    position: relative;
+    overflow: hidden;
+    background: var(--k-blue);
+    color: var(--k-white);
+    padding: 22px 0 30px;
   }
 
+  /* The orbit motif: faint concentric ellipses echoing the logo swoosh. */
+  .appbar::before,
+  .appbar::after {
+    content: "";
+    position: absolute;
+    border: 1px solid var(--k-cyan);
+    border-radius: 50%;
+    opacity: .22;
+    pointer-events: none;
+  }
+  .appbar::before { inset: -60% -12% auto 38%; height: 260%; }
+  .appbar::after  { inset: -95% -30% auto 22%; height: 340%; opacity: .12; }
+
   .appbar__inner {
-    max-width: 1440px;
-    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .appbar__logo { display: block; height: 40px; width: auto; }
+
+  .appbar__rule {
+    width: 1px;
+    align-self: stretch;
+    min-height: 42px;
+    background: rgba(255, 255, 255, .34);
+  }
+
+  .appbar__eyebrow {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--k-blue-pale);
   }
 
   .appbar__title {
-    margin: 0;
-    font-size: 21px;
-    font-weight: 650;
-    letter-spacing: -.2px;
-  }
-
-  .appbar__tagline {
-    margin: 4px 0 0;
-    font-size: 13px;
-    color: rgba(255, 255, 255, .78);
-  }
-
-  .summary {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
-    margin-top: 18px;
-  }
-
-  .summary__tile {
-    background: rgba(255, 255, 255, .12);
-    border: 1px solid rgba(255, 255, 255, .18);
-    border-radius: 10px;
-    padding: 10px 14px;
-  }
-
-  .summary__label {
-    display: block;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: .07em;
-    color: rgba(255, 255, 255, .75);
-  }
-
-  .summary__value {
-    display: block;
-    margin-top: 2px;
+    margin: 2px 0 0;
+    color: var(--k-white);
     font-size: 22px;
-    font-weight: 650;
+    font-weight: 600;
+    letter-spacing: -.1px;
+  }
+
+  .appbar__meta {
+    margin: 0 0 0 auto;
+    text-align: right;
+    font-size: 12.5px;
+    font-weight: 300;
+    color: var(--k-blue-pale);
+  }
+  .appbar__meta strong { display: block; font-weight: 500; color: var(--k-white); }
+
+  /* ============================================================
+     KPI STRIP - the management read
+     ============================================================ */
+  .kpis {
+    background: linear-gradient(var(--k-blue) 42px, var(--k-tint) 42px);
+    padding-bottom: 26px;
+  }
+
+  .kpis__grid {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr 1fr 1fr;
+    gap: 16px;
+  }
+
+  .kpi {
+    background: var(--k-white);
+    border: 1px solid var(--k-hairline);
+    border-top: 3px solid var(--k-blue);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .kpi--attention { border-top-color: var(--warn-fill); }
+
+  .kpi__label {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--k-ink-soft);
+  }
+
+  /* Proportional figures on display numerals - tabular-nums is for
+     columns that must align vertically, not for big standalone values. */
+  .kpi__value {
+    display: block;
+    margin-top: 6px;
+    color: var(--k-blue);
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -.6px;
+  }
+  .kpi--hero .kpi__value { font-size: 50px; }
+
+  .kpi__sub { margin: 6px 0 0; font-size: 12.5px; font-weight: 300; color: var(--k-ink); }
+
+  .kpi__foot {
+    margin: auto 0 0;
+    padding-top: 10px;
+    font-size: 11.5px;
+    font-weight: 300;
+    color: var(--k-ink-soft);
+  }
+
+  /* Meter: the fill carries severity, the track is a light step of the
+     same ramp, and the number beside it always states the real value. */
+  .meter {
+    margin-top: 12px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--k-tint);
+    overflow: hidden;
+  }
+  .meter__fill { display: block; height: 100%; border-radius: 999px; background: var(--k-blue); }
+  .meter__fill.is-ok   { background: var(--ok-fill); }
+  .meter__fill.is-warn { background: var(--warn-fill); }
+  .meter__fill.is-bad  { background: var(--bad-fill); }
+
+  /* ============================================================
+     INSIGHT PANELS - status mix + value by warehouse
+     ============================================================ */
+  .insights {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+    padding: 22px 0 0;
+  }
+
+  .panel {
+    background: var(--k-white);
+    border: 1px solid var(--k-hairline);
+    border-radius: var(--radius);
+    padding: 16px 18px 18px;
+    min-width: 0;
+  }
+
+  .panel__title { font-size: 14px; font-weight: 600; }
+  .panel__hint {
+    margin: 3px 0 14px;
+    font-size: 12px;
+    font-weight: 300;
+    color: var(--k-ink-soft);
+  }
+
+  /* Stacked status bar - 2px surface gaps between segments. */
+  .stackbar {
+    display: flex;
+    gap: 2px;
+    height: 34px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--k-tint);
+  }
+  .stackbar__seg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    color: var(--k-white);
+    font-size: 12px;
+    font-weight: 600;
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .stackbar__seg.is-in  { background: var(--ok-fill); }
+  .stackbar__seg.is-low { background: var(--warn-fill); color: #4A3000; }
+  .stackbar__seg.is-out { background: var(--bad-fill); }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 12px;
+    font-weight: 300;
+    color: var(--k-ink);
+  }
+  .legend__swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    margin-right: 6px;
+    vertical-align: -1px;
+  }
+  .legend__swatch.is-in  { background: var(--ok-fill); }
+  .legend__swatch.is-low { background: var(--warn-fill); }
+  .legend__swatch.is-out { background: var(--bad-fill); }
+  .legend b { font-weight: 600; }
+
+  /* Ranked bars - one hue, direct value labels, no legend needed. */
+  .ranked { margin: 0; padding: 0; list-style: none; }
+  .ranked__row + .ranked__row { margin-top: 11px; }
+
+  .ranked__head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+  .ranked__name  { font-weight: 500; color: var(--k-ink); }
+  .ranked__value { font-weight: 600; color: var(--k-blue); font-variant-numeric: tabular-nums; }
+
+  .ranked__track { height: 8px; border-radius: 0 999px 999px 0; background: var(--k-tint); }
+  .ranked__bar {
+    display: block;
+    height: 100%;
+    min-width: 3px;
+    border-radius: 0 4px 4px 0;
+    background: var(--k-blue);
   }
 
   /* ============================================================
      PAGE LAYOUT - table (main) beside form (side)
      ============================================================ */
   .layout {
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: 24px;
+    padding: 22px 0 32px;
     display: grid;
     grid-template-columns: minmax(0, 1fr) 340px;
-    gap: 24px;
+    gap: 22px;
     align-items: start;
   }
 
   .card {
-    background: var(--card);
-    border: 1px solid var(--line);
+    background: var(--k-white);
+    border: 1px solid var(--k-hairline);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     /* Contains the sticky header + horizontal scroll region. */
     overflow: hidden;
   }
 
-  .card__head {
-    padding: 16px 18px;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .card__title {
-    margin: 0;
-    font-size: 15px;
-    font-weight: 640;
-  }
-
+  .card__head { padding: 16px 18px; border-bottom: 1px solid var(--k-hairline); }
+  .card__title { font-size: 15px; font-weight: 600; }
   .card__hint {
     margin: 3px 0 0;
     font-size: 12.5px;
-    color: var(--ink-soft);
+    font-weight: 300;
+    color: var(--k-ink-soft);
   }
 
   /* ============================================================
@@ -166,38 +358,32 @@
   .field { display: flex; flex-direction: column; gap: 5px; }
   .field--grow { flex: 1 1 220px; min-width: 0; }
 
-  .field > label {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--ink-soft);
-  }
+  .field > label { font-size: 12px; font-weight: 600; color: var(--k-ink-soft); }
 
   input[type="text"],
   input[type="number"],
   input[type="search"],
   select {
     font: inherit;
-    color: var(--ink);
-    background: #fff;
-    border: 1px solid var(--line-strong);
+    color: var(--k-ink);
+    background: var(--k-white);
+    border: 1px solid var(--k-hairline);
     border-radius: 8px;
     padding: 8px 10px;
     width: 100%;
     min-width: 0;
   }
-
-  input::placeholder { color: var(--ink-faint); }
+  input:hover, select:hover { border-color: var(--k-sky); }
+  input::placeholder { color: var(--k-ink-soft); opacity: .7; }
 
   input[aria-invalid="true"],
-  select[aria-invalid="true"] {
-    border-color: #d05353;
-    background: #fffafa;
-  }
+  select[aria-invalid="true"] { border-color: var(--bad-fill); background: #FFFAFA; }
 
   .toolbar__count {
     margin-left: auto;
     font-size: 12.5px;
-    color: var(--ink-soft);
+    font-weight: 300;
+    color: var(--k-ink-soft);
     padding-bottom: 9px;
     white-space: nowrap;
   }
@@ -207,88 +393,81 @@
      ============================================================ */
   /* The scroll container: on narrow screens the table scrolls here
      instead of widening the page. */
-  .table-wrap {
-    overflow-x: auto;
-    max-height: 620px;
-    overflow-y: auto;
-  }
+  .table-wrap { overflow-x: auto; max-height: 620px; overflow-y: auto; }
 
-  table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: 13.5px;
-  }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13.5px; }
 
   thead th {
     position: sticky;
     top: 0;
     z-index: 2;
-    background: #f8fafc;
+    background: var(--k-tint);
     text-align: left;
-    font-size: 11.5px;
-    font-weight: 660;
+    font-size: 11px;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: .05em;
-    color: var(--ink-soft);
+    letter-spacing: .06em;
+    color: var(--k-blue-deep);
     white-space: nowrap;
     padding: 10px 12px;
-    border-bottom: 1px solid var(--line-strong);
+    border-bottom: 1px solid var(--k-hairline);
   }
 
   thead th[data-key] { cursor: pointer; user-select: none; }
-  thead th[data-key]:hover { color: var(--accent); background: var(--accent-soft); }
-  thead th[aria-sort]:not([aria-sort="none"]) { color: var(--accent); }
+  thead th[data-key]:hover { color: var(--k-white); background: var(--k-blue); }
+  thead th[data-key]:hover .sort-arrow { color: var(--k-white); }
+  thead th[aria-sort]:not([aria-sort="none"]) { color: var(--k-blue); background: #E4ECF7; }
 
   .sort-arrow {
     display: inline-block;
     width: 10px;
     margin-left: 4px;
     font-size: 10px;
-    color: var(--accent);
+    color: var(--k-blue);
   }
 
   tbody td {
     padding: 10px 12px;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--k-hairline);
     vertical-align: middle;
     white-space: nowrap;
   }
 
-  tbody tr:nth-child(even) td { background: #fafbfd; }
-  tbody tr:hover td { background: var(--accent-soft); }
+  tbody tr:nth-child(even) td { background: #FAFCFE; }
+  tbody tr:hover td { background: var(--k-tint); }
 
-  .cell-sku    { font-family: var(--mono); font-size: 12.5px; letter-spacing: -.2px; }
-  .cell-name   { white-space: normal; min-width: 170px; font-weight: 550; }
-  .cell-num    { text-align: right; font-variant-numeric: tabular-nums; }
-  .cell-muted  { color: var(--ink-soft); }
+  .cell-sku   { font-family: var(--mono); font-size: 12.5px; letter-spacing: -.2px; color: var(--k-blue-deep); }
+  .cell-name  { white-space: normal; min-width: 170px; font-weight: 500; }
+  .cell-num   { text-align: right; font-variant-numeric: tabular-nums; }
+  .cell-value { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--k-blue-deep); }
+  .cell-muted { color: var(--k-ink-soft); font-weight: 300; }
 
   .empty-cell {
     padding: 42px 12px;
     text-align: center;
-    color: var(--ink-soft);
-    background: #fff !important;
+    color: var(--k-ink-soft);
+    background: var(--k-white) !important;
   }
 
   /* Brief highlight applied to a freshly added row. */
   @keyframes row-flash {
-    from { background: #dbeafe; }
+    from { background: #D6E4F5; }
     to   { background: transparent; }
   }
   tbody tr.is-new td { animation: row-flash 2.2s ease-out 1; }
   @media (prefers-reduced-motion: reduce) {
-    tbody tr.is-new td { animation: none; background: #dbeafe; }
+    tbody tr.is-new td { animation: none; background: #D6E4F5; }
   }
 
   /* ============================================================
-     STATUS PILLS
+     STATUS PILLS - colour plus text, never colour alone
      ============================================================ */
   .pill {
     display: inline-block;
-    padding: 3px 9px;
+    padding: 3px 10px;
     border-radius: 999px;
     font-size: 11.5px;
-    font-weight: 650;
+    font-weight: 600;
     border: 1px solid transparent;
     white-space: nowrap;
   }
@@ -297,35 +476,38 @@
   .pill--out { background: var(--bad-bg);  color: var(--bad-fg);  border-color: var(--bad-bd); }
 
   /* ============================================================
-     BUTTONS
+     BUTTONS - the house pill shape
      ============================================================ */
   .btn {
     font: inherit;
-    font-weight: 600;
-    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    border-radius: var(--radius-pill);
     border: 1px solid transparent;
-    padding: 9px 14px;
+    padding: 11px 16px;
     cursor: pointer;
   }
 
-  .btn--primary { background: var(--accent); color: #fff; }
-  .btn--primary:hover { background: #1a44bd; }
+  .btn--primary { background: var(--k-blue); color: var(--k-white); }
+  .btn--primary:hover { background: var(--k-blue-deep); }
 
   .btn--ghost {
-    background: #fff;
-    color: var(--ink-soft);
-    border-color: var(--line-strong);
+    background: var(--k-white);
+    color: var(--k-blue);
+    border-color: var(--k-blue);
   }
-  .btn--ghost:hover { background: #f3f5f9; color: var(--ink); }
+  .btn--ghost:hover { background: var(--k-tint); }
 
   .btn--delete {
     font: inherit;
-    font-size: 12.5px;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 7px;
-    background: #fff;
-    color: #a12222;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: var(--k-white);
+    color: var(--bad-fg);
     border: 1px solid var(--bad-bd);
     cursor: pointer;
   }
@@ -336,12 +518,12 @@
      ============================================================ */
   .notice {
     min-height: 20px;
-    padding: 10px 18px;
+    padding: 11px 18px;
     font-size: 13px;
-    font-weight: 550;
-    color: var(--ok-fg);
-    border-top: 1px solid var(--line);
-    background: #fbfdfc;
+    font-weight: 500;
+    color: var(--k-blue-deep);
+    border-top: 1px solid var(--k-hairline);
+    background: var(--k-tint);
   }
   .notice:empty { display: none; }
 
@@ -350,87 +532,231 @@
      ============================================================ */
   .form-body { padding: 16px 18px 18px; }
 
-  .form-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-
+  .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .form-grid .field--wide { grid-column: 1 / -1; }
 
-  .field-error {
-    margin: 0;
-    font-size: 12px;
-    font-weight: 600;
-    color: #a12222;
-  }
+  .field-error { margin: 0; font-size: 12px; font-weight: 600; color: var(--bad-fg); }
   .field-error:empty { display: none; }
 
-  .form-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 16px;
-  }
-  .form-actions .btn { flex: 1; }
+  .form-actions { display: flex; gap: 10px; margin-top: 16px; }
+  .form-actions .btn { flex: 1; padding-left: 8px; padding-right: 8px; }
 
   .form-note {
     margin: 14px 0 0;
     font-size: 12px;
-    color: var(--ink-faint);
-    line-height: 1.45;
+    font-weight: 300;
+    color: var(--k-ink-soft);
+    line-height: 1.5;
   }
 
   /* ============================================================
-     RESPONSIVE - single column under 900px
+     HOW TO USE - operator guide
      ============================================================ */
-  @media (max-width: 900px) {
-    .layout {
-      grid-template-columns: minmax(0, 1fr);
-      padding: 16px;
-      gap: 16px;
-    }
-    .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .appbar  { padding: 18px 16px 20px; }
-    .toolbar__count { margin-left: 0; padding-bottom: 0; }
+  .guide { background: var(--k-tint); border-top: 1px solid var(--k-hairline); padding: 44px 0 48px; }
+
+  .guide__title { font-size: 24px; font-weight: 600; }
+  .guide__lede {
+    margin: 8px 0 26px;
+    max-width: 62ch;
+    font-size: 15px;
+    font-weight: 300;
+    color: var(--k-ink);
   }
 
-  @media (max-width: 520px) {
-    .form-grid { grid-template-columns: minmax(0, 1fr); }
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: step;
+  }
+
+  .step {
+    position: relative;
+    background: var(--k-white);
+    border: 1px solid var(--k-hairline);
+    border-radius: var(--radius);
+    padding: 18px 18px 18px 56px;
+    counter-increment: step;
+  }
+  .step::before {
+    content: counter(step);
+    position: absolute;
+    left: 18px;
+    top: 18px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--k-blue);
+    color: var(--k-white);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 26px;
+    text-align: center;
+  }
+  .step h3 { font-size: 14px; font-weight: 600; margin-bottom: 5px; }
+  .step p  { margin: 0; font-size: 13px; font-weight: 300; color: var(--k-ink); }
+  .step p + p { margin-top: 7px; }
+  .step code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--k-tint);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+
+  .defs {
+    margin-top: 26px;
+    background: var(--k-white);
+    border: 1px solid var(--k-hairline);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .defs h3 { font-size: 14px; font-weight: 600; padding: 16px 18px 0; }
+  .defs__wrap { overflow-x: auto; padding: 8px 18px 18px; }
+  .defs table { font-size: 13px; min-width: 560px; }
+  .defs th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--k-ink-soft);
+    padding: 8px 14px 8px 0;
+    border-bottom: 1px solid var(--k-hairline);
+    white-space: nowrap;
+  }
+  .defs td {
+    padding: 9px 14px 9px 0;
+    border-bottom: 1px solid var(--k-hairline);
+    font-weight: 300;
+    vertical-align: top;
+  }
+  .defs td:first-child { font-weight: 600; color: var(--k-blue-deep); white-space: nowrap; }
+
+  /* ============================================================
+     FOOTER - two stacked blue bands
+     ============================================================ */
+  .footer-primary   { background: var(--k-blue-footer); color: var(--k-white); padding: 26px 0; }
+  .footer-secondary { background: var(--k-blue-mid);    color: var(--k-white); padding: 13px 0; }
+
+  .footer-primary p { margin: 0; font-size: 13px; font-weight: 300; color: var(--k-blue-pale); }
+  .footer-primary p:first-child {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--k-white);
+    margin-bottom: 5px;
+  }
+  .footer-secondary p { margin: 0; font-size: 12px; font-weight: 300; color: var(--k-blue-pale); }
+
+  /* ============================================================
+     RESPONSIVE
+     ============================================================ */
+  @media (max-width: 1120px) {
+    .kpis__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 900px) {
+    .shell    { padding: 0 16px; }
+    .layout   { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .insights { grid-template-columns: minmax(0, 1fr); }
+    .appbar__meta { margin-left: 0; text-align: left; width: 100%; }
+    .toolbar__count { margin-left: 0; padding-bottom: 0; }
+    .kpi--hero .kpi__value { font-size: 40px; }
+  }
+
+  @media (max-width: 560px) {
+    .kpis__grid { grid-template-columns: minmax(0, 1fr); }
+    .form-grid  { grid-template-columns: minmax(0, 1fr); }
+    .appbar__rule { display: none; }
   }
 </style>
 </head>
 <body>
 
 <!-- ==========================================================
-     HEADER BAR + LIVE SUMMARY STRIP
+     APP BAR
      ========================================================== -->
 <header class="appbar">
-  <div class="appbar__inner">
-    <h1 class="appbar__title">LogiTrack Inventory</h1>
-    <p class="appbar__tagline">Regional stock positions across the South-East Asia distribution network.</p>
-
-    <div class="summary">
-      <div class="summary__tile">
-        <span class="summary__label">Total SKUs</span>
-        <span class="summary__value" id="sum-skus">0</span>
-      </div>
-      <div class="summary__tile">
-        <span class="summary__label">Units in Stock</span>
-        <span class="summary__value" id="sum-units">0</span>
-      </div>
-      <div class="summary__tile">
-        <span class="summary__label">Below Reorder Level</span>
-        <span class="summary__value" id="sum-low">0</span>
-      </div>
-      <div class="summary__tile">
-        <span class="summary__label">Warehouses</span>
-        <span class="summary__value" id="sum-warehouses">0</span>
-      </div>
+  <div class="shell appbar__inner">
+    <img class="appbar__logo" src="data:image/png;base64,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"
+         alt="Kacific Broadband Satellites">
+    <span class="appbar__rule" aria-hidden="true"></span>
+    <div>
+      <p class="appbar__eyebrow">Supply Chain Operations</p>
+      <h1 class="appbar__title">Inventory Dashboard</h1>
     </div>
+    <p class="appbar__meta">
+      <strong>Asia-Pacific distribution network</strong>
+      Demonstration data &middot; resets on reload
+    </p>
   </div>
 </header>
 
-<main class="layout">
+<!-- ==========================================================
+     KPI STRIP - the management read
+     ========================================================== -->
+<section class="kpis" aria-label="Inventory key performance indicators">
+  <div class="shell">
+    <div class="kpis__grid">
+
+      <article class="kpi kpi--hero">
+        <p class="kpi__label">Inventory value</p>
+        <span class="kpi__value" id="kpi-value">&mdash;</span>
+        <p class="kpi__sub" id="kpi-value-sub"></p>
+        <p class="kpi__foot">Quantity on hand &times; unit cost, summed across every line.</p>
+      </article>
+
+      <article class="kpi">
+        <p class="kpi__label">Stock availability</p>
+        <span class="kpi__value" id="kpi-avail">&mdash;</span>
+        <div class="meter"><span class="meter__fill" id="kpi-avail-meter" style="width:0%"></span></div>
+        <p class="kpi__sub" id="kpi-avail-sub"></p>
+        <p class="kpi__foot">Share of lines holding more than their reorder level.</p>
+      </article>
+
+      <article class="kpi kpi--attention">
+        <p class="kpi__label">Lines needing action</p>
+        <span class="kpi__value" id="kpi-action">&mdash;</span>
+        <p class="kpi__sub" id="kpi-action-sub"></p>
+        <p class="kpi__foot">At or below reorder level &mdash; raise a purchase order.</p>
+      </article>
+
+      <article class="kpi">
+        <p class="kpi__label">Replenishment cost</p>
+        <span class="kpi__value" id="kpi-replen">&mdash;</span>
+        <p class="kpi__sub" id="kpi-replen-sub"></p>
+        <p class="kpi__foot">Spend needed to lift every flagged line back to its reorder level.</p>
+      </article>
+
+    </div>
+
+    <!-- ======================================================
+         INSIGHT PANELS
+         ====================================================== -->
+    <div class="insights">
+
+      <section class="panel" aria-labelledby="mix-title">
+        <h2 class="panel__title" id="mix-title">Stock status mix</h2>
+        <p class="panel__hint">How the catalogue splits across the three stock states.</p>
+        <div class="stackbar" id="status-bar" role="img"
+             aria-labelledby="mix-title" aria-describedby="status-legend"></div>
+        <ul class="legend" id="status-legend"></ul>
+      </section>
+
+      <section class="panel" aria-labelledby="wh-title">
+        <h2 class="panel__title" id="wh-title">Inventory value by warehouse</h2>
+        <p class="panel__hint">Where the money is sitting. Ranked highest first.</p>
+        <ul class="ranked" id="warehouse-bars"></ul>
+      </section>
+
+    </div>
+  </div>
+</section>
+
+<main class="shell layout">
 
   <!-- ========================================================
        INVENTORY TABLE
@@ -466,13 +792,14 @@
             <th scope="col" data-key="qty"       tabindex="0" aria-sort="none">Quantity<span class="sort-arrow"></span></th>
             <th scope="col" data-key="reorder"   tabindex="0" aria-sort="none">Reorder Level<span class="sort-arrow"></span></th>
             <th scope="col" data-key="cost"      tabindex="0" aria-sort="none">Unit Cost (USD)<span class="sort-arrow"></span></th>
+            <th scope="col" data-key="value"     tabindex="0" aria-sort="none">Stock Value (USD)<span class="sort-arrow"></span></th>
             <th scope="col" data-key="supplier"  tabindex="0" aria-sort="none">Supplier<span class="sort-arrow"></span></th>
             <th scope="col" data-key="status"    tabindex="0" aria-sort="none">Status<span class="sort-arrow"></span></th>
             <th scope="col" data-key="updated"   tabindex="0" aria-sort="none">Last Updated<span class="sort-arrow"></span></th>
             <th scope="col">Actions</th>
           </tr>
         </thead>
-        <!-- Rows are generated from the `inventory` array; never hard-coded. -->
+        <!-- Rows are generated from the inventory array; never hard-coded. -->
         <tbody id="table-body"></tbody>
       </table>
     </div>
@@ -557,14 +884,141 @@
         </div>
 
         <p class="form-note">
-          Records are held in memory for this browser session only - reloading the page restores the
-          original data set.
+          Records are held in memory for this browser session only &mdash; reloading the page
+          restores the original data set.
         </p>
       </form>
     </div>
   </section>
 
 </main>
+
+<!-- ==========================================================
+     HOW TO USE
+     ========================================================== -->
+<section class="guide" aria-labelledby="guide-title">
+  <div class="shell">
+    <h2 class="guide__title" id="guide-title">How to use this dashboard</h2>
+    <p class="guide__lede">
+      Everything on this page is driven by one list of inventory lines. Change the list and every
+      number above it recalculates immediately &mdash; there is nothing to save, refresh or submit.
+    </p>
+
+    <ol class="steps">
+
+      <li class="step">
+        <h3>Start with the four KPIs</h3>
+        <p>They answer, in order: how much the stock is worth, how much of it is healthy, how many
+          lines need a decision, and what fixing them costs.</p>
+        <p>They cover the <b>whole</b> catalogue, not the filtered view, so the headline figures
+          stay steady while you search.</p>
+      </li>
+
+      <li class="step">
+        <h3>Read the two panels</h3>
+        <p>The <b>status mix</b> bar shows the split between in-stock, low and out-of-stock lines.
+          The <b>value by warehouse</b> bars show where the money is concentrated.</p>
+      </li>
+
+      <li class="step">
+        <h3>Find a line</h3>
+        <p>Type in the search box to match on SKU, product name or supplier &mdash; results narrow
+          as you type. Use the <b>Category</b> dropdown to restrict to one product family.</p>
+        <p>The count on the right of the toolbar says how many lines survived the filter.</p>
+      </li>
+
+      <li class="step">
+        <h3>Sort any column</h3>
+        <p>Click a column heading to sort by it; click the same heading again to reverse. Keyboard
+          users can tab to a heading and press <code>Enter</code>.</p>
+        <p>Each column sorts by its own type &mdash; numbers numerically, dates chronologically, and
+          <b>Status</b> by urgency (out of stock first) rather than alphabetically.</p>
+      </li>
+
+      <li class="step">
+        <h3>Read the status pills</h3>
+        <p><b>Out of Stock</b> means quantity is zero. <b>Low Stock</b> means quantity has fallen to
+          or below the reorder level. <b>In Stock</b> is everything above it.</p>
+        <p>Status is recalculated on every render from quantity and reorder level, so it can never
+          disagree with the numbers beside it.</p>
+      </li>
+
+      <li class="step">
+        <h3>Add a line</h3>
+        <p>Fill in the form on the right and press <b>Add Record</b>. SKUs must be unique; quantity
+          and reorder level must be whole numbers; unit cost may carry decimals.</p>
+        <p>If something is wrong, every problem field is flagged at once and the first is focused.
+          The new row flashes briefly so you can see where it landed.</p>
+      </li>
+
+      <li class="step">
+        <h3>Remove a line</h3>
+        <p>Press <b>Delete</b> at the end of a row. There is no confirmation dialog &mdash; the
+          removal is announced in the strip beneath the table instead.</p>
+        <p>Deleted a row by mistake? Reload the page and the original data set comes straight back.</p>
+      </li>
+
+      <li class="step">
+        <h3>Know what does not persist</h3>
+        <p>This is a demonstration front end. Nothing is written to a server, a database or browser
+          storage, and closing the tab discards every change you made.</p>
+      </li>
+
+    </ol>
+
+    <div class="defs">
+      <h3>How each KPI is calculated</h3>
+      <div class="defs__wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">KPI</th>
+              <th scope="col">Definition</th>
+              <th scope="col">Why it matters</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Inventory value</td>
+              <td>Sum of quantity &times; unit cost across all lines.</td>
+              <td>Working capital tied up in stock.</td>
+            </tr>
+            <tr>
+              <td>Stock availability</td>
+              <td>Lines holding more than their reorder level, as a percentage of all lines.</td>
+              <td>A service-level proxy &mdash; how much of the catalogue can be fulfilled without expediting.</td>
+            </tr>
+            <tr>
+              <td>Lines needing action</td>
+              <td>Count of lines at or below reorder level, split into out of stock and low.</td>
+              <td>The size of the purchasing workload today.</td>
+            </tr>
+            <tr>
+              <td>Replenishment cost</td>
+              <td>Sum of (reorder level &minus; quantity) &times; unit cost, over flagged lines only.</td>
+              <td>The budget needed to clear the shortfall.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-primary">
+    <div class="shell">
+      <p>Kacific Broadband Satellites &mdash; Supply Chain Operations</p>
+      <p>Internal inventory dashboard. Figures shown are demonstration data and do not represent
+        real stock positions, suppliers or costs.</p>
+    </div>
+  </div>
+  <div class="footer-secondary">
+    <div class="shell">
+      <p>Single-file build &middot; no network requests, no stored data.</p>
+    </div>
+  </div>
+</footer>
 
 <script>
 "use strict";
@@ -625,10 +1079,20 @@ const els = {
   clearBtn:    document.getElementById("clear-btn"),
   formCat:     document.getElementById("f-category"),
   formWh:      document.getElementById("f-warehouse"),
-  sumSkus:     document.getElementById("sum-skus"),
-  sumUnits:    document.getElementById("sum-units"),
-  sumLow:      document.getElementById("sum-low"),
-  sumWh:       document.getElementById("sum-warehouses")
+
+  kpiValue:      document.getElementById("kpi-value"),
+  kpiValueSub:   document.getElementById("kpi-value-sub"),
+  kpiAvail:      document.getElementById("kpi-avail"),
+  kpiAvailMeter: document.getElementById("kpi-avail-meter"),
+  kpiAvailSub:   document.getElementById("kpi-avail-sub"),
+  kpiAction:     document.getElementById("kpi-action"),
+  kpiActionSub:  document.getElementById("kpi-action-sub"),
+  kpiReplen:     document.getElementById("kpi-replen"),
+  kpiReplenSub:  document.getElementById("kpi-replen-sub"),
+
+  statusBar:     document.getElementById("status-bar"),
+  statusLegend:  document.getElementById("status-legend"),
+  warehouseBars: document.getElementById("warehouse-bars")
 };
 
 const numberFmt = new Intl.NumberFormat("en-US");
@@ -636,12 +1100,32 @@ const moneyFmt  = new Intl.NumberFormat("en-US", {
   style: "currency", currency: "USD",
   minimumFractionDigits: 2, maximumFractionDigits: 2
 });
+/* Whole dollars - for panel labels, where cents are noise. */
+const money0Fmt = new Intl.NumberFormat("en-US", {
+  style: "currency", currency: "USD",
+  minimumFractionDigits: 0, maximumFractionDigits: 0
+});
+/* Compact - for the display numerals only. */
+const compactFmt = new Intl.NumberFormat("en-US", {
+  style: "currency", currency: "USD",
+  notation: "compact", maximumFractionDigits: 1
+});
 
 /* Status is always derived, never stored on the record. */
 function statusOf(record) {
   if (record.qty === 0)             return { key: "out", label: "Out of Stock", cls: "pill--out" };
   if (record.qty <= record.reorder) return { key: "low", label: "Low Stock",    cls: "pill--low" };
   return                                   { key: "in",  label: "In Stock",     cls: "pill--in"  };
+}
+
+/* Stock value is derived the same way - never a stored field. */
+function valueOf(record) {
+  return record.qty * record.cost;
+}
+
+/* Units needed to bring a line back up to its reorder level. */
+function shortfallOf(record) {
+  return Math.max(record.reorder - record.qty, 0);
 }
 
 /* Sort rank so Status orders meaningfully (most urgent first, ascending). */
@@ -670,6 +1154,10 @@ function compareRecords(a, b) {
   if (key === "qty" || key === "reorder" || key === "cost") {
     return (a[key] - b[key]) * sort.dir;
   }
+  // Derived stock-value column.
+  if (key === "value") {
+    return (valueOf(a) - valueOf(b)) * sort.dir;
+  }
   // Dates are ISO strings, so a plain comparison is chronological.
   if (key === "updated") {
     return (a.updated < b.updated ? -1 : a.updated > b.updated ? 1 : 0) * sort.dir;
@@ -682,7 +1170,7 @@ function compareRecords(a, b) {
   return a[key].localeCompare(b[key]) * sort.dir;
 }
 
-/* Build one <td>. */
+/* Build one td. */
 function makeCell(text, className) {
   const td = document.createElement("td");
   td.textContent = text;
@@ -695,7 +1183,7 @@ function renderSortIndicators() {
   els.thead.querySelectorAll("th[data-key]").forEach(function (th) {
     const arrow = th.querySelector(".sort-arrow");
     if (th.dataset.key === sort.key) {
-      arrow.textContent = sort.dir === 1 ? "▲" : "▼";
+      arrow.textContent = sort.dir === 1 ? "\u25B2" : "\u25BC";
       th.setAttribute("aria-sort", sort.dir === 1 ? "ascending" : "descending");
     } else {
       arrow.textContent = "";
@@ -714,7 +1202,7 @@ function renderTable() {
   if (rows.length === 0) {
     const tr = document.createElement("tr");
     const td = makeCell("No records match", "empty-cell");
-    td.colSpan = 11;
+    td.colSpan = 12;
     tr.appendChild(td);
     els.tbody.appendChild(tr);
   } else {
@@ -730,6 +1218,7 @@ function renderTable() {
       tr.appendChild(makeCell(numberFmt.format(r.qty), "cell-num"));
       tr.appendChild(makeCell(numberFmt.format(r.reorder), "cell-num"));
       tr.appendChild(makeCell(moneyFmt.format(r.cost), "cell-num"));
+      tr.appendChild(makeCell(money0Fmt.format(valueOf(r)), "cell-value"));
       tr.appendChild(makeCell(r.supplier, "cell-muted"));
 
       // Status pill - colour plus text, so meaning never depends on colour alone.
@@ -768,16 +1257,170 @@ function renderTable() {
   renderSortIndicators();
 }
 
-/* Recompute the summary strip from the array. */
-function renderSummary() {
-  const totalUnits   = inventory.reduce(function (sum, r) { return sum + r.qty; }, 0);
-  const belowReorder = inventory.filter(function (r) { return r.qty <= r.reorder; }).length;
-  const warehouses   = new Set(inventory.map(function (r) { return r.warehouse; }));
+/* ---------- KPI computation -----------------------------------------
+   One pass over the WHOLE catalogue - never the filtered view - so the
+   management numbers stay steady while a coordinator searches. */
+function computeKpis() {
+  let totalValue    = 0;
+  let totalUnits    = 0;
+  let outCount      = 0;
+  let lowCount      = 0;
+  let replenishment = 0;
 
-  els.sumSkus.textContent  = numberFmt.format(inventory.length);
-  els.sumUnits.textContent = numberFmt.format(totalUnits);
-  els.sumLow.textContent   = numberFmt.format(belowReorder);
-  els.sumWh.textContent    = numberFmt.format(warehouses.size);
+  inventory.forEach(function (r) {
+    totalValue += valueOf(r);
+    totalUnits += r.qty;
+
+    const key = statusOf(r).key;
+    if (key === "out") outCount += 1;
+    if (key === "low") lowCount += 1;
+    if (key !== "in")  replenishment += shortfallOf(r) * r.cost;
+  });
+
+  const total   = inventory.length;
+  const flagged = outCount + lowCount;
+  const healthy = total - flagged;
+
+  return {
+    total:         total,
+    totalValue:    totalValue,
+    totalUnits:    totalUnits,
+    outCount:      outCount,
+    lowCount:      lowCount,
+    flagged:       flagged,
+    healthy:       healthy,
+    availability:  total === 0 ? 0 : Math.round((healthy / total) * 100),
+    replenishment: replenishment
+  };
+}
+
+/* Meter severity. The fill only carries the band - the numeral beside it
+   always states the real value. */
+function availabilityClass(pct) {
+  if (pct >= 90) return "meter__fill is-ok";
+  if (pct >= 70) return "meter__fill is-warn";
+  return "meter__fill is-bad";
+}
+
+function renderKpis(k) {
+  els.kpiValue.textContent = k.total === 0 ? "\u2014" : compactFmt.format(k.totalValue);
+  els.kpiValueSub.textContent =
+    money0Fmt.format(k.totalValue) + " across " + numberFmt.format(k.total) +
+    " lines \u00B7 " + numberFmt.format(k.totalUnits) + " units on hand";
+
+  els.kpiAvail.textContent = k.availability + "%";
+  els.kpiAvailMeter.className = availabilityClass(k.availability);
+  els.kpiAvailMeter.style.width = k.availability + "%";
+  els.kpiAvailSub.textContent =
+    numberFmt.format(k.healthy) + " of " + numberFmt.format(k.total) +
+    " lines above their reorder level";
+
+  els.kpiAction.textContent = numberFmt.format(k.flagged);
+  els.kpiActionSub.textContent =
+    numberFmt.format(k.outCount) + " out of stock \u00B7 " +
+    numberFmt.format(k.lowCount) + " low";
+
+  els.kpiReplen.textContent = k.replenishment === 0 ? "$0" : compactFmt.format(k.replenishment);
+  els.kpiReplenSub.textContent = k.flagged === 0
+    ? "No shortfall to cover"
+    : money0Fmt.format(k.replenishment) + " to cover " + numberFmt.format(k.flagged) +
+      (k.flagged === 1 ? " flagged line" : " flagged lines");
+}
+
+/* Stacked status bar. Segments are direct-labelled where they are wide
+   enough to hold the text; the legend below always carries the full count
+   either way, so nothing is ever conveyed by colour alone. */
+function renderStatusMix(k) {
+  const segments = [
+    { cls: "is-out", label: "Out of stock", count: k.outCount },
+    { cls: "is-low", label: "Low stock",    count: k.lowCount },
+    { cls: "is-in",  label: "In stock",     count: k.healthy  }
+  ];
+
+  els.statusBar.textContent = "";
+  els.statusLegend.textContent = "";
+
+  segments.forEach(function (seg) {
+    const share = k.total === 0 ? 0 : (seg.count / k.total) * 100;
+
+    if (seg.count > 0) {
+      const span = document.createElement("span");
+      span.className = "stackbar__seg " + seg.cls;
+      span.style.width = share + "%";
+      if (share >= 14) span.textContent = seg.count + " (" + Math.round(share) + "%)";
+      els.statusBar.appendChild(span);
+    }
+
+    const li = document.createElement("li");
+    const sw = document.createElement("span");
+    sw.className = "legend__swatch " + seg.cls;
+    li.appendChild(sw);
+
+    const strong = document.createElement("b");
+    strong.textContent = seg.label;
+    li.appendChild(strong);
+    li.appendChild(document.createTextNode(
+      " \u2014 " + seg.count + " (" + Math.round(share) + "%)"
+    ));
+
+    els.statusLegend.appendChild(li);
+  });
+}
+
+/* Ranked value-by-warehouse bars. One hue, direct value labels, no legend. */
+function renderWarehouseValue() {
+  const totals = {};
+  inventory.forEach(function (r) {
+    totals[r.warehouse] = (totals[r.warehouse] || 0) + valueOf(r);
+  });
+
+  const rows = Object.keys(totals)
+    .map(function (name) { return { name: name, value: totals[name] }; })
+    .sort(function (a, b) { return b.value - a.value; });
+
+  const max   = rows.length ? rows[0].value : 0;
+  const grand = rows.reduce(function (sum, row) { return sum + row.value; }, 0);
+
+  els.warehouseBars.textContent = "";
+
+  if (rows.length === 0) {
+    const li = document.createElement("li");
+    li.className = "ranked__row";
+    li.textContent = "No records";
+    els.warehouseBars.appendChild(li);
+    return;
+  }
+
+  rows.forEach(function (row) {
+    const li = document.createElement("li");
+    li.className = "ranked__row";
+
+    const head = document.createElement("div");
+    head.className = "ranked__head";
+
+    const name = document.createElement("span");
+    name.className = "ranked__name";
+    name.textContent = row.name;
+
+    const share = grand === 0 ? 0 : Math.round((row.value / grand) * 100);
+    const value = document.createElement("span");
+    value.className = "ranked__value";
+    value.textContent = money0Fmt.format(row.value) + "  \u00B7  " + share + "%";
+
+    head.appendChild(name);
+    head.appendChild(value);
+
+    const track = document.createElement("div");
+    track.className = "ranked__track";
+    const bar = document.createElement("span");
+    bar.className = "ranked__bar";
+    bar.style.width = (max === 0 ? 0 : (row.value / max) * 100) + "%";
+    track.appendChild(bar);
+
+    li.appendChild(head);
+    li.appendChild(track);
+    els.warehouseBars.appendChild(li);
+  });
 }
 
 /* Show a short inline confirmation in the aria-live region. */
@@ -789,8 +1432,11 @@ function announce(message) {
 
 /* Convenience: every mutation goes through this. */
 function refresh() {
+  const kpis = computeKpis();
   renderTable();
-  renderSummary();
+  renderKpis(kpis);
+  renderStatusMix(kpis);
+  renderWarehouseValue();
 }
 
 
@@ -810,7 +1456,7 @@ function handleCategoryFilter(event) {
   renderTable();
 }
 
-/* --- Column header sort (delegated across the whole <thead>). --- */
+/* --- Column header sort (delegated across the whole thead). --- */
 function handleSort(event) {
   const th = event.target.closest("th[data-key]");
   if (!th) return;
@@ -833,7 +1479,7 @@ function handleSortKeydown(event) {
   handleSort(event);
 }
 
-/* --- Delete, via event delegation on <tbody>. --- */
+/* --- Delete, via event delegation on tbody. --- */
 function handleTableClick(event) {
   const button = event.target.closest(".btn--delete");
   if (!button) return;
@@ -867,8 +1513,8 @@ function readNumber(rawValue, allowDecimals) {
   if (trimmed === "") return { error: "Required." };
 
   const value = Number(trimmed);
-  if (!isFinite(value))                           return { error: "Enter a valid number." };
-  if (value < 0)                                  return { error: "Cannot be negative." };
+  if (!isFinite(value))                              return { error: "Enter a valid number." };
+  if (value < 0)                                     return { error: "Cannot be negative." };
   if (!allowDecimals && value !== Math.trunc(value)) return { error: "Enter a whole number." };
 
   return { value: value };
@@ -958,7 +1604,7 @@ function todayISO() {
    4. INITIALISATION
    ============================================================ */
 
-/* Fill a <select> from an options array. */
+/* Fill a select from an options array. */
 function populateSelect(select, values, placeholder) {
   if (placeholder) {
     const opt = document.createElement("option");

@@ -1,0 +1,217 @@
+/* ==========================================================================
+   Kacific Broadband Satellites — brand tokens
+   Extracted from the live kacific.com theme, 2026-09-02.
+   The site itself ships no custom properties; these names are ours, mapped
+   onto the hex values the theme hardcodes. See ../SKILL.md for usage rules
+   and the contrast table that governs which of these may carry text.
+   ========================================================================== */
+
+:root {
+  /* --- Core blues ------------------------------------------------------ */
+  --k-blue:        #034EA2;  /* primary brand blue — logo, headings, nav    */
+  --k-blue-deep:   #003C72;  /* hover, dense text, depth                    */
+  --k-blue-mid:    #0071BC;  /* secondary surface, lower footer band        */
+  --k-blue-footer: #07529E;  /* upper footer band                           */
+  --k-sky:         #358CCB;  /* accent bands, second chart series           */
+  --k-sky-light:   #52A4CA;  /* tooltips, subtle callouts                   */
+  --k-cyan:        #5DC1D4;  /* orbital line-work, highlights — sparing     */
+
+  /* --- Neutrals -------------------------------------------------------- */
+  --k-white:       #FFFFFF;
+  --k-grey:        #A7A9AC;  /* logo grey — DECORATIVE ONLY, 2.4:1 on white */
+  --k-ink:         #464A4C;  /* body copy on light — 9.0:1                  */
+  --k-ink-soft:    #616161;  /* secondary copy                              */
+  --k-grey-text:   #929292;  /* muted label — 3.1:1, large text only        */
+  --k-blue-pale:   #C5D3E9;  /* muted text ON blue — 5.3:1 against --k-blue */
+  --k-tint:        #F1F4FA;  /* pale panel band                             */
+  --k-tint-warm:   #F4F4F4;  /* neutral panel band                          */
+  --k-hairline:    #DCE4EC;  /* borders, rules, dividers                    */
+
+  /* --- Semantic roles -------------------------------------------------- */
+  --k-bg:            var(--k-white);
+  --k-bg-alt:        var(--k-tint);
+  --k-text:          var(--k-ink);
+  --k-text-muted:    var(--k-ink-soft);
+  --k-heading:       var(--k-blue);
+  --k-link:          var(--k-blue);
+  --k-link-hover:    var(--k-blue-deep);
+  --k-border:        var(--k-hairline);
+  --k-surface-brand: var(--k-blue);
+  --k-on-brand:      var(--k-white);
+  --k-on-brand-muted:var(--k-blue-pale);
+
+  /* --- Typography ------------------------------------------------------ */
+  --k-font: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+            'Helvetica Neue', Arial, sans-serif;
+
+  --k-fw-body:     300;  /* Light — the signature body weight, keep it      */
+  --k-fw-medium:   400;
+  --k-fw-ui:       500;  /* buttons, UI labels                              */
+  --k-fw-heading:  600;
+  --k-fw-strong:   700;  /* hero, stat numerals                             */
+
+  --k-lh-tight:    1.15; /* headings                                        */
+  --k-lh-body:     1.55;
+
+  /* Modest type scale — the live theme sizes with vw, this is the fixed
+     equivalent at desktop. */
+  --k-fs-xs:       0.75rem;   /* 12px  captions                             */
+  --k-fs-sm:       0.875rem;  /* 14px  UI, buttons                          */
+  --k-fs-base:     1rem;      /* 16px  body                                 */
+  --k-fs-lg:       1.25rem;   /* 20px  lead paragraph                       */
+  --k-fs-h3:       1.5rem;    /* 24px                                       */
+  --k-fs-h2:       2rem;      /* 32px  section heading                      */
+  --k-fs-h1:       2.75rem;   /* 44px  hero                                 */
+  --k-fs-stat:     3.5rem;    /* 56px  big numerals                         */
+
+  /* --- Shape & space --------------------------------------------------- */
+  --k-radius-pill: 38px;      /* the house button radius                    */
+  --k-radius-card: 8px;
+  --k-space-section: 5rem;    /* vertical rhythm between bands              */
+}
+
+/* --------------------------------------------------------------------------
+   Base
+   -------------------------------------------------------------------------- */
+
+body {
+  margin: 0;
+  background: var(--k-bg);
+  color: var(--k-text);
+  font-family: var(--k-font);
+  font-weight: var(--k-fw-body);
+  font-size: var(--k-fs-base);
+  line-height: var(--k-lh-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  color: var(--k-heading);
+  font-family: var(--k-font);
+  line-height: var(--k-lh-tight);
+  margin: 0 0 0.5em;
+}
+
+h1 { font-size: var(--k-fs-h1); font-weight: var(--k-fw-strong); }
+h2 { font-size: var(--k-fs-h2); font-weight: var(--k-fw-heading); }
+h3 { font-size: var(--k-fs-h3); font-weight: var(--k-fw-heading); }
+
+a { color: var(--k-link); text-decoration: none; }
+a:hover { color: var(--k-link-hover); text-decoration: underline; }
+
+/* --------------------------------------------------------------------------
+   Components
+   -------------------------------------------------------------------------- */
+
+/* Pill button — fully rounded, uppercase, medium weight.
+   The asymmetric bottom padding is the theme's optical correction. */
+.k-btn {
+  display: inline-block;
+  border: 0;
+  border-radius: var(--k-radius-pill);
+  padding: 14px 28px 10px;
+  background: var(--k-blue);
+  color: var(--k-white);
+  font: var(--k-fw-ui) var(--k-fs-sm)/1 var(--k-font);
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease;
+}
+.k-btn:hover { background: var(--k-blue-deep); color: var(--k-white); text-decoration: none; }
+
+/* Inverted — for use on blue or photographic backgrounds */
+.k-btn--invert { background: var(--k-white); color: var(--k-blue); }
+.k-btn--invert:hover { background: var(--k-blue-pale); color: var(--k-blue-deep); }
+
+/* Outline */
+.k-btn--outline {
+  background: transparent;
+  color: var(--k-blue);
+  box-shadow: inset 0 0 0 2px currentColor;
+}
+
+/* Alternating section bands */
+.k-section      { padding: var(--k-space-section) 0; background: var(--k-bg); }
+.k-section--alt { background: var(--k-bg-alt); }
+
+/* Brand surface — solid blue block, e.g. nav or a feature band */
+.k-surface-brand {
+  background: var(--k-surface-brand);
+  color: var(--k-on-brand);
+}
+.k-surface-brand h1,
+.k-surface-brand h2,
+.k-surface-brand h3 { color: var(--k-on-brand); }
+.k-surface-brand .muted { color: var(--k-on-brand-muted); }
+
+/* Card */
+.k-card {
+  background: var(--k-white);
+  border: 1px solid var(--k-border);
+  border-radius: var(--k-radius-card);
+  padding: 1.5rem;
+}
+
+/* Stat block — oversized blue numeral over a light caption */
+.k-stat__value {
+  display: block;
+  color: var(--k-blue);
+  font-size: var(--k-fs-stat);
+  font-weight: var(--k-fw-strong);
+  line-height: 1.1;
+}
+.k-stat__label {
+  color: var(--k-ink-soft);
+  font-size: var(--k-fs-sm);
+  font-weight: var(--k-fw-body);
+}
+
+/* Footer — two stacked blue bands */
+.k-footer-primary   { background: var(--k-blue-footer); color: var(--k-white); }
+.k-footer-secondary { background: var(--k-blue-mid);    color: var(--k-white); }
+.k-footer-primary a,
+.k-footer-secondary a { color: var(--k-blue-pale); }
+
+/* --------------------------------------------------------------------------
+   Orbit ellipse motif — see SKILL.md
+   -------------------------------------------------------------------------- */
+
+.k-hero-media {
+  border-radius: 50%;
+  overflow: hidden;
+  transform: rotate(-4deg) scale(1.08);
+}
+.k-hero-media > img { width: 100%; height: 100%; object-fit: cover; }
+
+.k-card-media {
+  border-radius: 50% 50% 50% 50% / 22% 22% 22% 22%;
+  overflow: hidden;
+}
+.k-card-media > img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Faint concentric orbital hairlines behind content */
+.k-orbit-field { position: relative; overflow: hidden; }
+.k-orbit-field::before,
+.k-orbit-field::after {
+  content: '';
+  position: absolute;
+  border: 1px solid var(--k-cyan);
+  border-radius: 50%;
+  opacity: .18;
+  pointer-events: none;
+}
+.k-orbit-field::before { inset: -20% -10% auto -10%; height: 140%; }
+.k-orbit-field::after  { inset: -40% -25% auto -25%; height: 180%; opacity: .10; }
+
+/* --------------------------------------------------------------------------
+   Chart series — blue always leads
+   -------------------------------------------------------------------------- */
+
+:root {
+  --k-series-1: #034EA2;
+  --k-series-2: #358CCB;
+  --k-series-3: #5DC1D4;
+  --k-series-4: #A7A9AC;
+  --k-series-5: #003C72;
+}

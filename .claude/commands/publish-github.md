@@ -1,5 +1,5 @@
 ---
-description: Publish this project to GitHub — secret scan, push, README, About section, and Pages via Actions
+description: Publish this project to GitHub — secret scan, push, README, About section, Pages via Actions, and a README screenshot
 argument-hint: <owner/repo> [public|private]
 ---
 
@@ -20,6 +20,9 @@ public on your own.
 Work through the steps below **in order**. Step 1 gates everything else: nothing is pushed
 until the scan is clean or the user has explicitly accepted each finding. Report at the end
 with the repo URL, the Pages URL, and anything you skipped.
+
+The screenshot (Step 6) comes last on purpose: it is captured from the deployed Pages site,
+so it cannot be taken until Step 5 has actually succeeded.
 
 ---
 
@@ -123,6 +126,7 @@ Thumbs.db
 desktop.ini
 ~$*
 .claude/settings.local.json
+.playwright-mcp/
 ```
 
 Keep `.claude/commands/` tracked — those are shareable. Do **not** ignore `CLAUDE.md`; it
@@ -172,6 +176,10 @@ Write it from what the code actually does, by reading `index.html` and `CLAUDE.m
 
 - **What it is** — one paragraph. An internal warehouse stock dashboard, single-file, no
   build step.
+- **Screenshot** — a single image directly under the opening paragraph, added in Step 6:
+  `![<descriptive alt text>](docs/screenshot.png)`. Leave it out of the first README pass
+  and add it once the file exists; a README committed with a broken image link is worse
+  than one with no image.
 - **Live demo** — link the Pages URL from Step 5 (add this after Pages is deployed).
 - **Running it locally** — open `index.html` in a browser. That is the whole setup.
 - **Features** — search, category filter, typed column sorting, derived In/Low/Out status,
@@ -179,6 +187,9 @@ Write it from what the code actually does, by reading `index.html` and `CLAUDE.m
 - **Design constraints** — one file; no frameworks, build step, or external requests; state
   is in-memory only so a reload restores seed data.
 - **Data note** — state plainly that the inventory rows are sample data, not real stock.
+
+If the README carries a "repository contents" table, list `docs/screenshot.png` there and
+say it is README-only, so nobody mistakes it for something the app loads.
 
 Keep it honest: do not claim tests, CI, or a license that does not exist. Ask whether the
 user wants a license file rather than adding one unprompted.
@@ -273,6 +284,90 @@ Once deployed, add the live URL to the README (Step 3) and verify the About home
 
 ---
 
+## Step 6 — README screenshot
+
+The README needs one image of the app actually running. Capture it from the **deployed
+Pages site** from Step 5, not from a `file://` load — the published page is what a reader
+is about to click through to, and shooting the deployed URL also proves the deployment
+really works.
+
+Requires the Playwright MCP server. This project already declares it in `.mcp.json` at the
+repo root:
+
+```json
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
+    }
+  }
+}
+```
+
+If that file is missing, create it and tell the user the session must be restarted (or the
+server approved) before the `playwright` tools appear — MCP servers are loaded at startup,
+so a newly written `.mcp.json` does nothing until then. `npx` needs Node on PATH; note that
+Node was **not installed on this machine** when the rest of this command was written, so
+verify with `node --version` rather than assuming.
+
+Capture:
+
+1. `browser_resize` to **1440 × 900** — a wide viewport, so the table shows all its columns
+   rather than the mobile single-column collapse below 900px.
+2. `browser_navigate` to the Pages URL.
+3. Confirm the page rendered — the summary strip and populated table should both be there.
+   A blank or 404 page means Pages has not finished propagating; wait and retry rather than
+   shipping a screenshot of an error.
+4. `browser_take_screenshot` as PNG. Ask for the full page if the table fits, otherwise the
+   viewport — do not stitch or crop by hand.
+
+Then move the capture into the repo as `docs/screenshot.png`:
+
+```powershell
+New-Item -ItemType Directory -Force docs
+Move-Item .playwright-mcp\<captured-file>.png docs\screenshot.png -Force
+```
+
+Playwright MCP writes into `.playwright-mcp/` in the working directory. That folder is
+scratch output — make sure `.gitignore` lists it (Step 2) so only the copy under `docs/`
+is committed.
+
+Add the image to the README under the opening paragraph, with **alt text that describes
+what is on screen**, not just the project name — the alt text is what screen-reader users
+and anyone with images disabled get instead:
+
+```markdown
+![The LogiTrack Inventory dashboard: a summary strip above a sortable inventory table and an add-record form.](docs/screenshot.png)
+```
+
+Use a repo-relative path (`docs/screenshot.png`), never an absolute local path and never a
+`raw.githubusercontent.com` URL — the relative form works on GitHub, on the Pages site, and
+in a local clone.
+
+Before committing, check the PNG: it should be under ~1 MB (re-capture at viewport size
+rather than full page if it is much larger), and it must show only sample data — no browser
+chrome revealing local paths, no other tabs, no bookmarks bar, no personal profile name.
+The scan rules in Step 1 apply to pixels too, and an image cannot be grepped later.
+
+Commit and push:
+
+```powershell
+git add .gitignore .mcp.json docs/screenshot.png README.md
+git commit -m @'
+Add app screenshot to README
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+'@
+git push
+```
+
+If Playwright is unavailable and cannot be installed, do **not** invent a screenshot or
+link one that does not exist. Say so, leave the README image out, and offer to add it later
+once the user drops a PNG into `docs/`.
+
+---
+
 ## Final report
 
 Tell the user:
@@ -280,6 +375,7 @@ Tell the user:
 1. Scan result — what was found, what was removed, what they accepted.
 2. Repo URL and visibility.
 3. Pages URL, and whether the first deployment succeeded (`gh run list`).
-4. Anything skipped or blocked, and why.
+4. Whether the README screenshot was captured and committed, or why it was not.
+5. Anything skipped or blocked, and why.
 
 Do not report success for a step you did not actually verify.
