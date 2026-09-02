@@ -5,6 +5,8 @@ filter, sort, and maintain inventory records, with stock status derived automati
 quantity against reorder level. The entire application is a single `index.html`: markup, CSS and
 JavaScript inline, no frameworks and no build step. Open the file and it runs.
 
+![The LogiTrack Inventory dashboard: a summary strip above a sortable inventory table and an add-record form.](docs/screenshot.png)
+
 ## Live demo
 
 **https://chunkiat0989.github.io/Claude-Training/**
@@ -70,6 +72,7 @@ system. Any resemblance to an actual company name is coincidental.
 | `index.html` | The entire application. |
 | `CLAUDE.md` | Architecture notes and invariants, for working on the code with Claude Code. |
 | `.claude/commands/` | A reusable slash command for publishing this project to GitHub. |
+| `docs/screenshot.png` | The README screenshot. Not used by the application. |
 
 ## Status
 

@@ -9,3 +9,4 @@ Thumbs.db
 desktop.ini
 ~$*
 .claude/settings.local.json
+.playwright-mcp/
